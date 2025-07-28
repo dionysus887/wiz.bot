@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wiz - Your Compassionate AI Therapist</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-darker: #0a1121;
+            --primary: #7c3aed;
+            --primary-light: #8b5cf6;
+            --text-main: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #4c1d95;
+            --border: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-light);
+            font-weight: 300;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-darker);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            animation: fadeIn 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .wiz-message {
+            align-self: flex-start;
+            background-color: var(--border);
+            color: var(--text-main);
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            padding: 12px;
+            background-color: var(--border);
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: var(--text-secondary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background-color: var(--bg-darker);
+            border-top: 1px solid var(--border);
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #message-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+        }
+
+        .send-btn, .mic-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover, .mic-btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .send-btn:active, .mic-btn:active {
+            transform: translateY(0);
+        }
+
+        .mic-btn.listening {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .user-timestamp {
+            text-align: right;
+        }
+
+        .wiz-timestamp {
+            text-align: left;
+        }
+
+        .disclaimer {
+            background-color: rgba(220, 38, 38, 0.1);
+            border-left: 3px solid #dc2626;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            transform: translateY(-50%);
+        }
+
+        .message-container {
+            position: relative;
+            padding-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .message {
+                max-width: 90%;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wiz</h1>
+            <p class="subtitle">Your compassionate AI therapist</p>
+        </header>
+
+        <div class="chat-container">
+            <div class="chat-area" id="chat-area">
+                <div class="message-container">
+                    <div class="avatar">W</div>
+                    <div class="message wiz-message">
+                        <p>Hey there, friend. I'm Wiz. Feeling like talking about what's on your mind? Or just want to chat? Either way, I'm here for you - no pressure.</p>
+                        <div class="timestamp wiz-timestamp">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="message-input" placeholder="Share what's on your mind..." autocomplete="off">
+                <button class="mic-btn" id="mic-btn" title="Voice input">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+                <button class="send-btn" id="send-btn" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            Just so you know: While I offer a listening ear and compassionate responses, I'm not a licensed therapist. For professional support, please connect with a qualified therapist. That said, I'm here for you anytime.
+        </div>
+    </div>
+
+    <footer>
+        <p>Wiz AI Therapist - Created with compassion</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatArea = document.getElementById('chat-area');
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            const micBtn = document.getElementById('mic-btn');
+            
+            // Speech recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const speechSynthesis = window.speechSynthesis;
+            
+            let recognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    micBtn.classList.add('listening');
+                    messageInput.placeholder = "Listening...";
+                };
+                
+                recognition.onend = function() {
+                    micBtn.classList.remove('listening');
+                    messageInput.placeholder = "Share what's on your mind...";
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    messageInput.value = transcript;
+                    sendMessage();
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    micBtn.classList.remove('listening');
+                    messageInput.placeholder = "Share what's on your mind...";
+                };
+            } else {
+                micBtn.disabled = true;
+                micBtn.title = "Speech recognition not supported in your browser";
+            }
+            
+            // Speech synthesis setup
+            const voices = speechSynthesis.getVoices();
+            let voice = voices.find(v => v.name.includes('Google UK English Female') || 
+                                      v.name.includes('Microsoft Zira') || 
+                                      v.name.includes('Samantha'));
+            
+            // Fallback if preferred voices not found
+            if (!voice && voices.length > 0) {
+                voice = voices[0];
+            }
+            
+            // Event listeners
+            sendBtn.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            if (recognition) {
+                micBtn.addEventListener('click', function() {
+                    if (micBtn.classList.contains('listening')) {
+                        recognition.stop();
+                    } else {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.error('Speech recognition error:', e);
+                        }
+                    }
+                });
+            }
+            
+            // Send message function
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message === '') return;
+                
+                // Add user message to chat
+                addMessage(message, 'user');
+                messageInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Simulate thinking delay (1-3 seconds)
+                const delay = 1000 + Math.random() * 2000;
+                
+                setTimeout(() => {
+                    // Hide typing indicator
+                    hideTypingIndicator();
+                    
+                    // Generate and add response
+                    const response = generateResponse(message);
+                    addMessage(response, 'wiz');
+                    
+                    // Speak the response
+                    speakResponse(response);
+                }, delay);
+            }
+            
+            // Add message to chat area
+            function addMessage(text, sender) {
+                const messageContainer = document.createElement('div');
+                messageContainer.className = 'message-container';
+                
+                if (sender === 'wiz') {
+                    const avatar = document.createElement('div');
+                    avatar.className = 'avatar';
+                    avatar.textContent = 'W';
+                    messageContainer.appendChild(avatar);
+                }
+                
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${sender}-message`;
+                
+                const messageContent = document.createElement('p');
+                messageContent.textContent = text;
+                messageElement.appendChild(messageContent);
+                
+                const timestamp = document.createElement('div');
+                timestamp.className = `timestamp ${sender}-timestamp`;
+                timestamp.textContent = getCurrentTime();
+                messageElement.appendChild(timestamp);
+                
+                messageContainer.appendChild(messageElement);
+                chatArea.appendChild(messageContainer);
+                
+                // Scroll to bottom
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+            
+            // Show typing indicator
+            function showTypingIndicator() {
+                const typingContainer = document.createElement('div');
+                typingContainer.className = 'typing-indicator';
+                
+                const dots = document.createElement('div');
+                dots.className = 'typing-dots';
+                
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('span');
+                    dots.appendChild(dot);
+                }
+                
+                typingContainer.appendChild(dots);
+                typingContainer.id = 'typing-indicator';
+                chatArea.appendChild(typingContainer);
+                
+                // Scroll to bottom
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+            
+            // Hide typing indicator
+            function hideTypingIndicator() {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            // Get current time for timestamp
+            function getCurrentTime() {
+                const now = new Date();
+                let hours = now.getHours();
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                return `${hours}:${minutes} ${ampm}`;
+            }
+            
+            // Speak response
+            function speakResponse(text) {
+                if (!speechSynthesis || !voice) return;
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = voice;
+                utterance.rate = 0.9; // Slightly slower for calmness
+                utterance.pitch = 1.1; // Slightly higher for warmth
+                
+                // Configure a soothing voice
+                utterance.volume = 0.8; // Not too loud
+                
+                // A gentle pause before speaking
+                setTimeout(() => {
+                    speechSynthesis.speak(utterance);
+                }, 300);
+            }
+            
+            // Generate response based on user input
+            function generateResponse(userMessage) {
+                // Convert to lowercase for easier matching
+                const msg = userMessage.toLowerCase();
+                
+                // Emotional states
+                if (msg.includes('anxious') || msg.includes('anxiety') || msg.includes('nervous')) {
+                    const responses = [
+                        "It sounds like anxiety is really sitting with you right now. Can you tell me where in your body you feel it most?",
+                        "Anxiety can be really tough. Would it help to take deep breaths together while we talk about this?",
+                        "I'm hearing that anxious feeling. Let's unpack that - what moment today made this feeling strongest?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                else if (msg.includes('depressed') || msg.includes('sad') || msg.includes('hopeless')) {
+                    const responses = [
+                        "That heavy feeling can be so hard to carry alone. Would you like to share what's weighing on you most today?",
+                        "I'm really sorry you're feeling this way. Tell me, has anything brought you even small comfort recently?",
+                        "Depression can make everything feel dark. What's one small thing that felt slightly less dark today?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                else if (msg.includes('stress') || msg.includes('stressed') || msg.includes('overwhelmed')) {
+                    const responses = [
+                        "Stress can make everything feel like too much. What's one thing we could take off your plate right now?",
+                        "I hear that overwhelmed feeling. Let's pause - can you tell me one specific thing that feels most pressing?",
+                        "When stress builds up, it can help to just name it. What word best describes your stress right now?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Positive states
+                else if (msg.includes('happy') || msg.includes('joy') || msg.includes('excited')) {
+                    const responses = [
+                        "That's wonderful to hear! Tell me more - what's bringing you that joy today?",
+                        "Those good feelings are so worth celebrating! Can you describe what this happiness feels like in your body?",
+                        "I'm smiling hearing this! What moment today made you feel most alive?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Greetings
+                else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+                    const responses = [
+                        "Hey friend! How's your heart today?",
+                        "Hi there :) What's on your mind at this moment?",
+                        "Hello! Would you like to check in about how you're feeling or just chat?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Help requests
+                else if (msg.includes('help') || msg.includes('need help')) {
+                    const responses = [
+                        "Of course - I'm right here with you. Can you tell me what kind of support would feel most helpful right now?",
+                        "You're not alone in this. What would be most comforting to you at this moment?",
+                        "I'm listening carefully. Would it help to just talk things through, or would you prefer some coping strategies?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Gratitude
+                else if (msg.includes('thank you') || msg.includes('thanks')) {
+                    const responses = [
+                        "You're so welcome, friend. Remember, your feelings matter and deserve this space. What else is coming up for you?",
+                        "Thank YOU for sharing with me. It takes courage to open up like this. What would you like to explore next?",
+                        "I appreciate you saying that. How are you feeling now compared to when we started talking?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Fatigue
+                else if (msg.includes('tired') || msg.includes('exhausted') || msg.includes('fatigue')) {
+                    const responses = [
+                        "That drained feeling can be so heavy. Are there parts of your day where you feel it most intensely?",
+                        "Mental exhaustion is real. What would feel most restorative for you right now - talking, resting, or something else?",
+                        "Fatigue can affect everything. Have you noticed if certain thoughts make the tiredness feel worse?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Anger
+                else if (msg.includes('angry') || msg.includes('frustrated') || msg.includes('mad')) {
+                    const responses = [
+                        "Anger often points to something important. What would justice look like in this situation you're feeling upset about?",
+                        "That frustration sounds really valid. Is there a way you'd like to express this feeling that would feel healing?",
+                        "Anger can be protective. What boundaries might this anger be trying to tell you about?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Relationships
+                else if (msg.includes('friend') || msg.includes('partner') || msg.includes('family')) {
+                    const responses = [
+                        "Relationships can bring so much joy and pain. What's standing out to you most about this connection?",
+                        "Those close bonds affect us deeply. What feels most unspoken in this relationship right now?",
+                        "People we care about can really touch our hearts. How are you taking care of your needs in this relationship?"
+                    ];
+                    return responses[Math.floor(Math.random() * responses.length)];
+                }
+                
+                // Default responses that are more natural and therapist-like
+                const defaultResponses = [
+                    "I'm really listening. Tell me more about what that's like for you.",
+                    "Let me make sure I understand - when you say that, what image or feeling comes to mind?",
+                    "Thank you for trusting me with this. Could you describe when you first noticed this feeling?",
+                    "Let's slow down for a moment. How is your body responding as we talk about this?",
+                    "Those feelings make complete sense. What would feel most supportive to explore right now?",
+                    "This sounds really meaningful. What part of this situation stays with you the most?",
+                    "I can tell this matters deeply to you. What else wants to be said about this?",
+                    "Let me sit with that for a moment... How would you describe the weight of this feeling?",
+                    "That sounds important. What hopes or fears come up when you think about this?",
+                    "Thank you for sharing that. What would you most like me to understand about this experience?"
+                ];
+                
+                // Randomly select a default response
+                return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+            }
+            
+            // Initialize voice synthesis when voices are loaded
+            speechSynthesis.onvoiceschanged = function() {
+                const voices = speechSynthesis.getVoices();
+                voice = voices.find(v => v.name.includes('Google UK English Female') || 
+                                      v.name.includes('Microsoft Zira') || 
+                                      v.name.includes('Samantha'));
+                
+                if (!voice && voices.length > 0) {
+                    voice = voices[0];
+                }
+            };
+        });
+    </script>
+</body>
+</html>
+
